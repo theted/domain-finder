@@ -7,8 +7,11 @@ export const getDomainSuggestions = async (type: string, words: string) => {
   const prompt = OPENAI_PROMPT(type, words);
   const response = await openAiPrompt(prompt);
   const domains = parseDomains(response);
-  const results = await Promise.all(domains.map(checkDomain));
+  return domains.splice(0, 10);
+};
 
+export const checkAvailabilityOfDomains = async (domains: string[]) => {
+  const results = await Promise.all(domains.map(checkDomain));
   return domains.reduce((acc, domain, index) => {
     acc[domain] = results[index];
     return acc;
