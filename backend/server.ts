@@ -3,10 +3,6 @@ import cors from "cors";
 import bodyParser from "body-parser";
 import { Server } from "socket.io";
 import { QueueEvents } from "bullmq";
-import {
-  getDomainSuggestions,
-  checkAvailabilityOfDomains,
-} from "./models/find";
 import { Queue } from "bullmq";
 import { QUQUE_OPTIONS } from "./config";
 
@@ -27,7 +23,8 @@ const server = app.listen(PORT, () => {
   console.log("Server running on port", PORT);
 });
 
-const queue = new Queue("CheckDomain", QUQUE_OPTIONS);
+const getDomains = new Queue("GetDomainSuggestions", QUQUE_OPTIONS);
+const queueEvents = new QueueEvents("CheckDomain");
 
 const io = new Server(server, {
   cors: {
@@ -47,20 +44,10 @@ app.get("/", (_req, res) => {
 });
 
 app.post("/check", async (req, res) => {
-  // TODO: move to worker
-  const suggestions = await getDomainSuggestions(req.body.type, req.body.words);
-
-  suggestions.forEach((domain) => {
-    queue.add("check-domain", { domain });
-  });
-
-  // TODO: only in worer
-  const results = await checkAvailabilityOfDomains(suggestions);
-  console.log({ results });
-  res.json({ suggestions: results });
+  const { type, words } = req.body;
+  getDomains.add("find-domains", { type, words });
+  res.send("Some status");
 });
-
-const queueEvents = new QueueEvents("CheckDomain");
 
 queueEvents.on("completed", (data) => {
   console.log("check domain event", data);

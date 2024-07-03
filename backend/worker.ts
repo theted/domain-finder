@@ -1,9 +1,11 @@
-import { Worker } from "bullmq";
+import { Worker, Queue } from "bullmq";
 import { QUQUE_OPTIONS } from "./config";
 import { checkDomain } from "./models/domainr";
+import { getDomainSuggestions } from "./models/find";
+
+const checkdomainQueue = new Queue("CheckDomain", QUQUE_OPTIONS);
 
 const testDomain = async (domain: string) => {
-  console.log(`checking domain => ${domain}`);
   const isAvailable = await checkDomain(domain);
   return { domain, isAvailable };
 };
@@ -13,19 +15,30 @@ const checker = new Worker(
   async (job) => {
     if (job.name === "check-domain") {
       const result = await testDomain(job.data.domain);
-      console.log({ result, name: job.name, data: job.data });
       return { ...result, ...job.data };
     }
   },
   QUQUE_OPTIONS
 );
 
-checker.on("completed", (job) => {
-  console.log(`# ${job.id} completed!`, job.data);
-});
+const finder = new Worker(
+  "GetDomainSuggestions",
+  async (job) => {
+    if (job.name === "find-domains") {
+      const { type, words } = job.data;
+      const suggestions = await getDomainSuggestions(type, words);
+      return suggestions;
+    }
+  },
+  QUQUE_OPTIONS
+);
 
-checker.on("failed", (job, err) => {
-  console.log(`${job.id} failed with ${err.message}`);
+finder.on("completed", (job) => {
+  const suggestions = job.returnvalue;
+
+  suggestions.forEach((suggestion) => {
+    checkdomainQueue.add("check-domain", { domain: suggestion });
+  });
 });
 
 console.log("Worker running...");
