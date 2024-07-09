@@ -14,3 +14,7 @@ export const parseDomains = (domainString: string) => {
 export const createDomains = (domains: string[]) => {
   return domains.map((domain) => `${domain}.com`);
 };
+
+export const mRand = (num: number) => Math.floor(Math.random() * num);
+
+export const randInArr = (arr: string[]) => arr[mRand(arr.length)];

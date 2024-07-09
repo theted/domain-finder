@@ -1,20 +1,39 @@
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import socketIOClient from "socket.io-client";
 
 const ENDPOINT = "http://127.0.0.1:5000";
 
-const Results = () => {
+type ResultsProps = {
+  setIsLoading: (isLoading: boolean) => void;
+};
+
+const getFilteredDomains = (domainSuggestions: string) => {
+  return domainSuggestions
+    .split(" ")
+    .map((domain) => domain.split("="))
+    .filter((domain) => domain.length === 2)
+    .filter((domain) => domain[1] === "true") // available domains
+    .map((domain) => [domain[0]])
+    .flat()
+    .filter((value, index, array) => array.indexOf(value) === index); // unique values
+};
+
+const Domain = ({ domain }: { domain: string }) => {
+  return (
+    <div className="text-black p-3 px-6 rounded-md bg-green-900 text-white hover:bg-green-700 animate-fadein hover:animate-fadein">
+      <a href={"https://" + domain} target="_blank" className="">
+        {domain}
+      </a>
+    </div>
+  );
+};
+
+const Results = ({ setIsLoading }: ResultsProps) => {
   const domainSuggestions = useRef("");
+  const [domains, setDomains] = useState([]);
 
   const filtered = domainSuggestions.current.length
-    ? domainSuggestions.current
-        .split(" ")
-        .map((domain) => domain.split("="))
-        .filter((domain) => domain.length === 2)
-        .filter((domain) => domain[1] === "true") // available domains
-        .map((domain) => [domain[0]])
-        .flat()
-        .filter((value, index, array) => array.indexOf(value) === index) // unique values
+    ? getFilteredDomains(domainSuggestions.current)
     : [];
 
   console.log({ filtered });
@@ -23,7 +42,13 @@ const Results = () => {
     const socket = socketIOClient(ENDPOINT);
 
     socket.on("check-domain", (data) => {
+      console.log({ data });
       domainSuggestions.current = `${data.returnvalue.domain}=${data.returnvalue.isAvailable} ${domainSuggestions.current}`;
+      setDomains([...domains, data.returnvalue]);
+    });
+
+    socket.on("completed", () => {
+      setIsLoading(false);
     });
   }, []);
 
@@ -31,22 +56,17 @@ const Results = () => {
     <>
       <div className="hidden">{domainSuggestions.current}</div>
 
-      <div id="suggestions" className="mt-12">
-        {filtered.length && (
-          <ul className="flex flex-wrap justify-center gap-3">
-            {filtered.map((domain) => (
-              <li
-                key={domain}
-                className="text-black p-3 border border-black font-bold"
-              >
-                <a href={"https://" + domain} target="_blank" className="">
-                  {domain}
-                </a>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+      {filtered.length ? (
+        <ul className="flex flex-wrap justify-center gap-3 mt-12">
+          {filtered.map((domain) => (
+            <li key={domain}>
+              <Domain key={domain} domain={domain} />
+            </li>
+          ))}
+        </ul>
+      ) : (
+        ""
+      )}
     </>
   );
 };
