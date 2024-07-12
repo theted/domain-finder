@@ -1,4 +1,7 @@
 import { useState } from "react";
+import { industries } from "../assets/data/industries.json";
+import words from "../assets/data/words.json";
+import { randInArr } from "../helpers";
 
 const VITE_EVENTS_URL = import.meta.env.VITE_EVENTS_URL;
 
@@ -6,9 +9,28 @@ type FormProps = {
   setIsLoading: (isLoading: boolean) => void;
 };
 
+const getRandomWords = (length = 4) => {
+  const outputWords = [];
+
+  for (let i = 0; i < length; i++) {
+    const randomIndex = Math.floor(Math.random() * words.length);
+    outputWords.push(words[randomIndex]);
+  }
+
+  return outputWords.join(", ");
+};
+
 export const Form = ({ setIsLoading }: FormProps) => {
-  const [type, setType] = useState("web developer");
-  const [words, setWords] = useState("modern, friendly");
+  const [type, setType] = useState(randInArr(industries));
+  const [words, setWords] = useState(getRandomWords());
+
+  // TODO: get client id for socket.io - maybe wrap in a provider?
+
+  const randomizeForm = () => {
+    setType(randInArr(industries));
+    setWords(getRandomWords());
+    return false;
+  };
 
   const submitForm = async (e) => {
     e.preventDefault();
@@ -52,6 +74,10 @@ export const Form = ({ setIsLoading }: FormProps) => {
         value={words}
         onChange={(e) => setWords(e.target.value)}
       />
+
+      <button onClick={randomizeForm} className="border p-3 bg-gray-800">
+        Randomize form
+      </button>
 
       <button onClick={submitForm} className="border p-3 bg-gray-800">
         Suggest available domain names
