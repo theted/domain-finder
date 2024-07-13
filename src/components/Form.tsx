@@ -32,11 +32,14 @@ export const Form = ({ setIsLoading }: FormProps) => {
   const randomizeForm = () => {
     setType(randInArr(industries));
     setWords(getRandomWords());
-    return false;
+    return false; // prevent form submission
   };
 
-  const submitForm = async (e) => {
-    e.preventDefault();
+  // TODO: fix type
+  const submitForm = async (e: any) => {
+    if ("preventDefault" in e) {
+      e.preventDefault();
+    }
 
     console.log("POST =>", { type, words });
     setIsLoading(true);

@@ -20,7 +20,7 @@ const getFilteredDomains = (domainSuggestions: string) => {
 
 const Domain = ({ domain }: { domain: string }) => {
   return (
-    <div className="text-black p-3 px-6 rounded-md bg-green-900 text-white hover:bg-green-700 animate-fadein hover:animate-fadein">
+    <div className="domain p-3 px-6 rounded-md bg-green-900 text-white hover:bg-green-700 animate-fadein hover:animate-fadein">
       <a href={"https://" + domain} target="_blank" className="">
         {domain}
       </a>
@@ -28,9 +28,14 @@ const Domain = ({ domain }: { domain: string }) => {
   );
 };
 
+type Domain = {
+  domain: string;
+  isAvailable: boolean;
+};
+
 const Results = ({ setIsLoading }: ResultsProps) => {
   const domainSuggestions = useRef("");
-  const [domains, setDomains] = useState([]);
+  const [domains, setDomains] = useState<Domain[]>([]);
 
   const filtered = domainSuggestions.current.length
     ? getFilteredDomains(domainSuggestions.current)
@@ -43,7 +48,7 @@ const Results = ({ setIsLoading }: ResultsProps) => {
 
     socket.on("check-domain", (data) => {
       console.log({ data });
-      domainSuggestions.current = `${data.returnvalue.domain}=${data.returnvalue.isAvailable} ${domainSuggestions.current}`;
+      domainSuggestions.current = `${domainSuggestions.current} ${data.returnvalue.domain}=${data.returnvalue.isAvailable}`;
       setDomains([...domains, data.returnvalue]);
     });
 

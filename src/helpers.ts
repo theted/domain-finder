@@ -3,10 +3,10 @@ export const parseDomains = (domainString: string) => {
     .split("\n")
     .map((line) => {
       const [number, domain] = line.split(".");
-      if (!number) return null;
-      return domain && domain.trim().replace(/\s/g, "");
+      if (!number || !domain) return null;
+      return domain.trim().replace(/\s/g, "");
     })
-    .filter((domain) => !!domain);
+    .filter((domain): domain is string => domain !== null);
   return createDomains(domains);
 };
 
