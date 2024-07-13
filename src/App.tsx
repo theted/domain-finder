@@ -7,7 +7,7 @@ const App = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   return (
-    <div className="flex flex-col items-center justify-center h-screen">
+    <div className="flex flex-col items-center justify-center h-screen bg-primary">
       <div className="p-6 border rounded-lg bg-white max-w-screen-lg">
         <h1 className="text-3xl font-bold text-black">Domain finder</h1>
         <Form setIsLoading={setIsLoading} />

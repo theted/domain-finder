@@ -2,6 +2,9 @@ import { useState } from "react";
 import { industries } from "../assets/data/industries.json";
 import words from "../assets/data/words.json";
 import { randInArr } from "../helpers";
+import { Button } from "@/components/ui/button";
+import { IndustriesSelect } from "./IndustriesSelect";
+import { Input } from "@/components/ui/input";
 
 const VITE_EVENTS_URL = import.meta.env.VITE_EVENTS_URL;
 
@@ -58,30 +61,26 @@ export const Form = ({ setIsLoading }: FormProps) => {
       <label className="text-black text-xl" htmlFor="type">
         What is your occupation?
       </label>
-      <input
-        name="type"
-        className="border p-3 mt-2 mb-6"
-        value={type}
-        onChange={(e) => setType(e.target.value)}
-      />
+
+      <IndustriesSelect type={type} onValueChange={(value) => setType(value)} />
 
       <label className="text-black text-xl" htmlFor="words">
         In a few words, what are some key keywords categorizing your business?
       </label>
-      <input
+      <Input
         name="words"
-        className="border p-3 mt-2 mb-6"
+        className="mt-2 mb-6"
         value={words}
         onChange={(e) => setWords(e.target.value)}
       />
 
-      <button onClick={randomizeForm} className="border p-3 bg-gray-800">
+      <Button onClick={randomizeForm} className="border p-3 bg-gray-800">
         Randomize form
-      </button>
+      </Button>
 
-      <button onClick={submitForm} className="border p-3 bg-gray-800">
+      <Button onClick={submitForm} className="border p-3 bg-gray-800">
         Suggest available domain names
-      </button>
+      </Button>
     </form>
   );
 };
