@@ -5,6 +5,8 @@ import { Server } from "socket.io";
 import { QueueEvents } from "bullmq";
 import { Queue } from "bullmq";
 import { QUQUE_OPTIONS } from "./config";
+import path from "path";
+import { fork } from "child_process";
 
 const PORT = 5000;
 const app = express();
@@ -20,7 +22,9 @@ app.use((req, _res, next) => {
 });
 
 const server = app.listen(PORT, () => {
-  console.log("Server running on port", PORT);
+  console.log(
+    `Server running on port ${PORT} in ${process.env.NODE_ENV} environment`
+  );
 });
 
 const getDomains = new Queue("GetDomainSuggestions", QUQUE_OPTIONS);
@@ -46,10 +50,19 @@ app.get("/", (_req, res) => {
 app.post("/check", async (req, res) => {
   const { type, words } = req.body;
   getDomains.add("find-domains", { type, words });
-  res.send("Some status");
+  res.send("Request received, check results using websockets");
 });
 
 queueEvents.on("completed", (data) => {
   console.log("check domain event", data);
   io.emit("check-domain", data);
 });
+
+// if in development, also spin up a worker as a child process
+if (process.env.NODE_ENV === "development") {
+  console.log("Starting worker...");
+  const worker = fork(path.join(__dirname, "worker.ts"));
+  worker.on("message", (message) => {
+    console.log("worker message", message);
+  });
+}
