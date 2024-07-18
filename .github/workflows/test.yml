@@ -36,6 +36,7 @@ jobs:
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           DOMAINR_API_KEY: ${{ secrets.DOMAINR_API_KEY }}
+          VITE_EVENTS_URL: ${{ secrets.VITE_EVENTS_URL }}
         run: |
           VITE_API_KEY="${API_KEY}" npm run build
           npm run preview &
