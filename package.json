@@ -12,7 +12,7 @@
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "test": "vitest",
-    "test-ci": "start-server-and-test start-server-and-worker http://localhost:5000 test"
+    "test-ci": "DEBUG=true start-server-and-test start-server-and-worker http://localhost:5000 test"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.1",
