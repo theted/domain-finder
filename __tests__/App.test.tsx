@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { render, fireEvent, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import App from "../src/App.tsx";
 
 const ROLE = "Graphic Design";
@@ -14,16 +15,18 @@ describe("App", () => {
 
   it("handles submit correctly, and shows results", async () => {
     const { getAllByRole, getByRole } = render(<App />);
+    const user = userEvent.setup();
     const buttons = getAllByRole("button");
     const submitButton = buttons[1];
-    const roleDropdown = getByRole("combobox");
-    const wordsInput = getByRole("textbox");
+    const roleDropdown = getByRole("combobox") as HTMLSelectElement;
+    const wordsInput = getByRole("textbox") as HTMLInputElement;
 
-    fireEvent.select(roleDropdown, { target: { value: ROLE } });
-    expect(roleDropdown).toHaveValue(ROLE);
+    await user.click(roleDropdown);
+    await user.click(getByRole("option", { name: ROLE }));
+    expect(roleDropdown.textContent).toEqual(ROLE);
 
     fireEvent.change(wordsInput, { target: { value: WORDS } });
-    expect(wordsInput).toHaveValue(WORDS);
+    expect(wordsInput.value).toEqual(WORDS);
 
     fireEvent.click(submitButton);
 
