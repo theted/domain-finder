@@ -9,6 +9,7 @@
     "start-server": "bun run backend/server.ts",
     "start-worker": "bun run backend/worker.ts",
     "start-server-and-worker": "concurrently \"npm run start-server\" \"npm run start-worker\"",
+    "start-dev-environment": "concurrently \"npm run start-server\" \"npm run start-worker\" \"npm run dev\"",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "test": "vitest",
