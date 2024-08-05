@@ -45,6 +45,13 @@ npm run start-worker
 npm run dev
 ```
 
+### Running in Docker
+
+```
+docker build -t domain-finder .
+docker-compose up
+```
+
 [Domainr]: https://domainr.com
 [OpenAI API]: https://openai.com/api/
 [Bull]: https://bullmq.io/
