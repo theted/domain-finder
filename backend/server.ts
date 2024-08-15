@@ -5,6 +5,7 @@ import { Server } from "socket.io";
 import { QueueEvents } from "bullmq";
 import { Queue } from "bullmq";
 import { QUQUE_OPTIONS } from "./config.ts";
+import path from "path";
 
 const PORT = 5000;
 const app = express();
@@ -13,6 +14,8 @@ app.use(cors());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.set("port", PORT);
+
+app.use(express.static(path.join(__dirname, "../", "dist")));
 
 app.use((req, _res, next) => {
   console.log({ method: req.method, url: req.url, body: req.body });
@@ -39,10 +42,6 @@ io.on("connection", (socket) => {
   socket.on("disconnect", () => {
     console.log("user disconnected");
   });
-});
-
-app.get("/", (_req, res) => {
-  res.send("Hello from server!");
 });
 
 app.post("/check", async (req, res) => {
