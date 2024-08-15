@@ -26,7 +26,7 @@ const server = app.listen(PORT, () => {
 });
 
 const getDomains = new Queue("GetDomainSuggestions", QUQUE_OPTIONS);
-const queueEvents = new QueueEvents("CheckDomain");
+const queueEvents = new QueueEvents("CheckDomain", QUQUE_OPTIONS);
 
 const io = new Server(server, {
   cors: {

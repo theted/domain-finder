@@ -1,6 +1,6 @@
 export const QUQUE_OPTIONS = {
   connection: {
-    host: "localhost",
+    host: "redis",
     port: 6379,
   },
 };
