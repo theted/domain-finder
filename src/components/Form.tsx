@@ -8,7 +8,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Form as FormRoot,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -32,7 +31,7 @@ type FormProps = {
 
 export const Form = ({ setIsLoading }: FormProps) => {
   const [type, setType] = useState("");
-  const [words, setWords] = useState("");
+  const [words] = useState("");
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
@@ -97,18 +96,9 @@ export const Form = ({ setIsLoading }: FormProps) => {
                   {...field}
                 />
               </FormControl>
-              <FormDescription>Words</FormDescription>
               <FormMessage />
             </FormItem>
           )}
-        />
-
-        <Input
-          name="words"
-          className="mt-2 mb-6"
-          value={words}
-          onChange={(e) => setWords(e.target.value)}
-          required
         />
 
         <Button onClick={submitForm} className="border p-3 bg-gray-800">
