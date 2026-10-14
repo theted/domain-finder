@@ -2,11 +2,11 @@ import { existsSync } from "node:fs";
 import path from "node:path";
 import { serve } from "@hono/node-server";
 import { getConnInfo } from "@hono/node-server/conninfo";
-import { serveStatic } from "@hono/node-server/serve-static";
 import { createApp } from "./app.ts";
 import { createAvailabilityChecker } from "./availability.ts";
 import { createDemoNames, createOpenAiNames } from "./names.ts";
 import { clientAddress, createRateLimiter } from "./rate-limit.ts";
+import { serveClient } from "./static.ts";
 
 const env = process.env;
 const port = Number(env.PORT ?? 5000);
@@ -27,18 +27,7 @@ const app = createApp({
 
 // In production the built client is served from the same origin as the API.
 const dist = path.relative(process.cwd(), path.join(import.meta.dirname, "..", "dist"));
-if (existsSync(dist)) {
-  app.use(
-    "/*",
-    serveStatic({
-      root: dist,
-      onFound: (file, c) => {
-        if (file.includes("/assets/")) c.header("cache-control", "public, max-age=31536000, immutable");
-      },
-    }),
-  );
-  app.get("*", serveStatic({ root: dist, path: "index.html" }));
-}
+if (existsSync(dist)) serveClient(app, dist);
 
 const server = serve({ fetch: app.fetch, port, hostname }, (info) => {
   console.log(`domain-finder listening on http://${info.address}:${info.port}`);
