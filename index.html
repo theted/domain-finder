@@ -11,5 +11,9 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <!-- Visit counter: daily totals only, no cookies or stored IPs (theted/tracking-pixel). Counted
+         only when loaded from domains.sundbergsolutions.se, so the dev server is ignored. -->
+    <script>new Image().src='https://visits.sundbergsolutions.se/v.gif?s=domain-finder&r='+encodeURIComponent(document.referrer)</script>
+    <noscript><img src="https://visits.sundbergsolutions.se/v.gif?s=domain-finder" alt="" width="1" height="1" style="position:absolute"></noscript>
   </body>
 </html>
