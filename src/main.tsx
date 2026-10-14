@@ -1,10 +1,12 @@
-import React from "react";
-import ReactDOM from "react-dom/client";
-import App from "./App.tsx";
-import "./index.css";
+import "@fontsource-variable/newsreader/opsz.css";
+import "@fontsource-variable/familjen-grotesk/wght.css";
+import "./styles.css";
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+import { App } from "./App.tsx";
 
-ReactDOM.createRoot(document.getElementById("root")!).render(
-  <React.StrictMode>
+createRoot(document.getElementById("root")!).render(
+  <StrictMode>
     <App />
-  </React.StrictMode>
+  </StrictMode>,
 );
