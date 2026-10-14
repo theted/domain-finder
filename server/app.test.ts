@@ -49,6 +49,9 @@ describe("POST /api/search", () => {
     ]);
     const domains = stream.flatMap((e) => (e.type === "domain" ? [`${e.domain}:${e.status}`] : []));
     expect(domains.sort()).toEqual(["mugkin.com:available", "mugkin.io:available", "takenly.com:taken", "takenly.io:taken"]);
+    const generated = stream.findIndex((e) => e.type === "generated");
+    expect(stream[generated]).toEqual({ type: "generated", count: 2 });
+    expect(generated).toBeGreaterThan(stream.findLastIndex((e) => e.type === "name"));
     expect(stream.at(-1)).toEqual({ type: "done" });
   });
 

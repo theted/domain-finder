@@ -43,6 +43,8 @@ export type CheckRequest = {
 export type StreamEvent =
   | { type: "name"; name: string; why: string }
   | ({ type: "domain" } & DomainResult)
+  // Sent once the model has finished suggesting; domain checks may still be running.
+  | { type: "generated"; count: number }
   | { type: "done" }
   | { type: "error"; message: string };
 

@@ -19,6 +19,21 @@ const ndjson = (events: StreamEvent[]) =>
     { headers: { "content-type": "application/x-ndjson" } },
   );
 
+// A response whose events the test sends one at a time.
+const controlledStream = () => {
+  let controller!: ReadableStreamDefaultController<Uint8Array>;
+  const encoder = new TextEncoder();
+  const response = new Response(new ReadableStream<Uint8Array>({ start: (c) => void (controller = c) }), {
+    headers: { "content-type": "application/x-ndjson" },
+  });
+  return {
+    response,
+    send: (...events: StreamEvent[]) =>
+      controller.enqueue(encoder.encode(events.map((e) => `${JSON.stringify(e)}\n`).join(""))),
+    close: () => controller.close(),
+  };
+};
+
 const domain = (name: string, tld: "com" | "io" | "ai", status: "available" | "taken", certain = true): StreamEvent => ({
   type: "domain",
   domain: `${name}.${tld}`,
@@ -142,6 +157,60 @@ describe("App", () => {
 
     expect(await screen.findByRole("heading", { name: "Potterly" })).toBeInTheDocument();
     expect(screen.getByText("Your idea.")).toBeInTheDocument();
+  });
+
+  it("shows what's still loading while results stream in", async () => {
+    const stream = controlledStream();
+    mockServer(() => stream.response);
+    const user = userEvent.setup();
+    const { container } = render(<App />);
+    await searchFor(user, "Ceramic cups");
+
+    // Before the first name: spinner heading, placeholder rows, busy button, loading bar.
+    expect(await screen.findByRole("heading", { name: "Thinking up names…" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Finding names…" })).toBeDisabled();
+    expect(container.querySelectorAll(".is-placeholder")).toHaveLength(3);
+    expect(container.querySelector(".loadbar")).toHaveAttribute("data-state", "loading");
+    expect(screen.getByRole("region", { name: "Thinking up names…" })).toHaveAttribute("aria-busy", "true");
+
+    // A name arrives: one placeholder stays for the next, its domains show as checking.
+    stream.send({ type: "name", name: "mugkin", why: "A mug with a friendly ending." });
+    expect(await screen.findByRole("heading", { name: "mugkin" })).toBeInTheDocument();
+    expect(container.querySelectorAll(".is-placeholder")).toHaveLength(1);
+    expect(container.querySelectorAll(".domain.is-checking")).toHaveLength(3);
+
+    // The model is done: no more placeholders, though checks are still running.
+    stream.send({ type: "generated", count: 1 });
+    await waitFor(() => expect(container.querySelectorAll(".is-placeholder")).toHaveLength(0));
+    expect(container.querySelector(".loadbar")).toHaveAttribute("data-state", "loading");
+
+    stream.send(domain("mugkin", "com", "available"), domain("mugkin", "io", "taken"), domain("mugkin", "ai", "taken"));
+    await waitFor(() => expect(container.querySelectorAll(".domain.is-checking")).toHaveLength(0));
+
+    stream.send({ type: "done" });
+    stream.close();
+    expect(await screen.findByRole("button", { name: "Find names" })).toBeEnabled();
+    expect(container.querySelector(".loadbar")).toHaveAttribute("data-state", "done");
+    expect(screen.getByRole("heading", { name: "1 name, 1 with a free domain" })).toBeInTheDocument();
+  });
+
+  it("shows a spinner on the button while your own name is checked", async () => {
+    const stream = controlledStream();
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string | URL | Request) =>
+        String(input) === "/api/check" ? stream.response : Response.json({ ok: true, demo: false, model: "m" }),
+      ),
+    );
+    const user = userEvent.setup();
+    render(<App />);
+    await user.type(screen.getByLabelText("Already have a name in mind?"), "potterly");
+    await user.click(screen.getByRole("button", { name: "Check it" }));
+
+    expect(await screen.findByRole("button", { name: "Checking…" })).toBeDisabled();
+    stream.send({ type: "name", name: "potterly", why: "" }, { type: "done" });
+    stream.close();
+    expect(await screen.findByRole("button", { name: "Check it" })).toBeInTheDocument();
   });
 
   it("explains errors from the server", async () => {
