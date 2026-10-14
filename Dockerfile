@@ -1,28 +1,21 @@
-FROM oven/bun:1 AS base
-WORKDIR /usr/src/app
-
-FROM base AS install
-RUN mkdir -p /temp/dev
-COPY package.json /temp/dev/
-RUN cd /temp/dev && bun install --frozen-lockfile
-
-RUN mkdir -p /temp/prod
-COPY package.json /temp/prod/
-RUN cd /temp/prod && bun install --frozen-lockfile
-
-FROM base AS prerelease
-COPY --from=install /temp/dev/node_modules node_modules
+# The browser bundle is built here; at runtime Node runs the TypeScript server
+# directly (type stripping), so there is no server build step.
+FROM node:26-alpine AS build
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci
 COPY . .
+RUN npx vite build
 
-ENV NODE_ENV=production
-RUN bun test
-RUN bun run build
-
-FROM base AS release
-COPY --from=install /temp/prod/node_modules node_modules
-COPY --from=prerelease /usr/src/app/package.json .
-COPY --from=prerelease /usr/src/app .
-
-USER bun
-EXPOSE 5000/tcp
-ENTRYPOINT [ "bun", "run", "backend/server.ts" ]
+FROM node:26-alpine
+WORKDIR /app
+ENV NODE_ENV=production HOST=0.0.0.0 PORT=5000
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev && npm cache clean --force
+COPY server ./server
+COPY shared ./shared
+COPY --from=build /app/dist ./dist
+USER node
+EXPOSE 5000
+HEALTHCHECK --interval=30s --timeout=3s CMD wget -qO- http://127.0.0.1:5000/api/health || exit 1
+CMD ["node", "server/index.ts"]

@@ -1,21 +1,16 @@
-version: "3.9"
 services:
-  redis:
-    image: "redis:alpine"
-    restart: on-failure
+  app:
+    build: .
+    init: true
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      # Proxy hops in front of the app whose X-Forwarded-For entries to trust: one, the host nginx.
+      # Rate limits key on the address that proxy saw, never on what the client claims.
+      TRUST_PROXY: ${TRUST_PROXY:-1}
+    # Localhost only: on the box the host nginx terminates TLS in front of this. 8088 is claimed
+    # in the port registry in theted/infrastructure (the-box.md).
     ports:
-      - "6379:6379"
-  backend:
-    restart: on-failure
-    depends_on:
-      - redis
-    build: ./
-    ports:
-      - "5000:5000"
-  worker:
-    restart: on-failure
-    depends_on:
-      - redis
-    build:
-      context: ./
-      dockerfile: worker.Dockerfile
+      - "127.0.0.1:8088:5000"
+    restart: unless-stopped
