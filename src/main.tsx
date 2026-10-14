@@ -1,4 +1,3 @@
-import "@fontsource-variable/newsreader/opsz.css";
 import "@fontsource-variable/familjen-grotesk/wght.css";
 import "./styles.css";
 import { StrictMode } from "react";

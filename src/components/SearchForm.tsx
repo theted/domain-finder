@@ -67,9 +67,17 @@ export const SearchForm = ({ busy, checkingOwn, error, onSearch, onStop, onCheck
   return (
     <div className="search">
       <form className="search-form" onSubmit={submit} noValidate>
+        <div className="pipeline">
+          <span className="pipeline-label">Your naming brief</span>
+          <ol aria-label="Name search steps">
+            <li className="is-current"><span>1</span> Describe</li>
+            <li><span>2</span> Shape the feel</li>
+            <li><span>3</span> Check domains</li>
+          </ol>
+        </div>
         <div className="field">
           <div className="field-head">
-            <label htmlFor={`${id}-description`}>What are you naming?</label>
+            <label className="step-label" htmlFor={`${id}-description`}>What are you naming?</label>
             <button type="button" className="text-button" onClick={fillExample}>
               Try an example
             </button>
@@ -93,7 +101,7 @@ export const SearchForm = ({ busy, checkingOwn, error, onSearch, onStop, onCheck
 
         <fieldset className="field">
           <legend>
-            Feel <span className="hint">up to {MAX_FEELS}, optional</span>
+            <span className="step-number" aria-hidden="true">02</span>Feel <span className="hint">up to {MAX_FEELS}, optional</span>
           </legend>
           <div className="chips">
             {FEELS.map((feel) => {
@@ -116,7 +124,7 @@ export const SearchForm = ({ busy, checkingOwn, error, onSearch, onStop, onCheck
 
         <fieldset className="field">
           <legend>
-            Domain endings <span className="hint">up to {MAX_TLDS}</span>
+            <span className="step-number" aria-hidden="true">03</span>Domain endings <span className="hint">up to {MAX_TLDS}</span>
           </legend>
           <div className="chips">
             {TLDS.map((tld) => {
@@ -138,19 +146,22 @@ export const SearchForm = ({ busy, checkingOwn, error, onSearch, onStop, onCheck
         </fieldset>
 
         <div className="actions">
-          <button type="submit" className="primary" disabled={busy}>
-            {busy ? (
-              <>
-                <Spinner />
-                Finding names…
-              </>
-            ) : (
-              "Find names"
-            )}
-          </button>
+          <div className="action-main">
+            <button type="submit" className="primary" disabled={busy}>
+              {busy ? (
+                <>
+                  <Spinner />
+                  Finding names…
+                </>
+              ) : (
+                "Find names"
+              )}
+            </button>
+            {!busy && <p className="action-note">Usually ready in a few seconds</p>}
+          </div>
           {busy && (
-            <button type="button" className="secondary" onClick={onStop}>
-              Stop
+            <button type="button" className="secondary stop-button" onClick={onStop}>
+              Stop search
             </button>
           )}
         </div>
