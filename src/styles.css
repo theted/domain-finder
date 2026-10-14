@@ -7,6 +7,7 @@
   --ink-soft: #5f6368;
   --rule: #dadce0;
   --field: #f1f3f4;
+  --field-strong: #e2e4e7;
   --field-focus: #ffffff;
   --link: #0000ee;
   --link-hover: #0000b3;
@@ -23,6 +24,11 @@
   --gutter: clamp(16px, 4vw, 40px);
   --measure: 50rem;
 
+  /* One easing for everything that moves: quick to start, gentle to land. */
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --quick: 0.16s;
+  --settle: 0.45s;
+
   color-scheme: light;
 }
 
@@ -33,6 +39,7 @@
     --ink-soft: #9aa0a6;
     --rule: #3c4043;
     --field: #303134;
+    --field-strong: #44474b;
     --field-focus: #303134;
     --link: #8ab4f8;
     --link-hover: #aecbfa;
@@ -130,6 +137,7 @@ p {
   border-radius: 999px;
   background: none;
   cursor: pointer;
+  transition: background-color var(--quick) ease;
 }
 
 .saved-toggle:hover {
@@ -144,6 +152,7 @@ p {
   font-size: 0.875rem;
   font-variant-numeric: tabular-nums;
   text-align: center;
+  animation: bump 0.35s var(--ease);
 }
 
 .demo-note {
@@ -231,6 +240,10 @@ p {
   line-height: 1.4;
   resize: none;
   field-sizing: content;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .omnibox::placeholder,
@@ -268,6 +281,16 @@ p {
   background: none;
   cursor: pointer;
   line-height: 1.3;
+  transition:
+    background-color var(--quick) ease,
+    border-color var(--quick) ease,
+    color var(--quick) ease,
+    opacity var(--quick) ease,
+    transform 0.1s ease;
+}
+
+.chip:active:not(:disabled) {
+  transform: scale(0.96);
 }
 
 .chip:hover:not(:disabled) {
@@ -302,11 +325,25 @@ p {
 
 .primary,
 .secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
   padding: 11px 22px;
   border-radius: 999px;
   font-weight: 600;
   line-height: 1.3;
   cursor: pointer;
+  transition:
+    background-color var(--quick) ease,
+    border-color var(--quick) ease,
+    color var(--quick) ease,
+    opacity var(--quick) ease,
+    transform 0.1s ease;
+}
+
+.primary:active:not(:disabled),
+.secondary:active:not(:disabled) {
+  transform: scale(0.97);
 }
 
 .primary {
@@ -322,7 +359,7 @@ p {
 
 .primary:disabled {
   cursor: progress;
-  opacity: 0.75;
+  opacity: 0.85;
 }
 
 .secondary {
@@ -339,6 +376,10 @@ p {
   cursor: not-allowed;
 }
 
+.secondary:has(.spinner):disabled {
+  cursor: progress;
+}
+
 .text-button {
   padding: 2px 0;
   border: 0;
@@ -347,6 +388,7 @@ p {
   text-decoration: underline;
   text-underline-offset: 3px;
   cursor: pointer;
+  transition: color var(--quick) ease;
 }
 
 .text-button:hover {
@@ -355,6 +397,7 @@ p {
 
 .form-message {
   color: var(--alert);
+  animation: arrive 0.3s var(--ease);
 }
 
 .own-form {
@@ -380,6 +423,10 @@ p {
   border: 1px solid transparent;
   border-radius: 999px;
   background: var(--field);
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .own-input:hover {
@@ -405,11 +452,24 @@ p {
   gap: 8px 24px;
 }
 
+.results {
+  scroll-margin-top: 16px;
+  animation: fade-in 0.3s ease;
+}
+
 .results-head h2 {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
   font-family: var(--serif);
   font-size: 1.625rem;
   font-weight: 400;
   font-variant-numeric: tabular-nums;
+}
+
+.results-head h2 .spinner {
+  color: var(--link);
+  font-size: 0.8em;
 }
 
 .toggle {
@@ -441,10 +501,34 @@ p {
   list-style: none;
 }
 
+/* Rows collapse instead of vanishing when names with no free domain are hidden: the grid
+   track shrinks from 1fr to 0fr, and the inner wrapper clips what no longer fits. */
 .name-row {
+  display: grid;
+  grid-template-rows: 1fr;
   padding: 26px 0 28px;
   border-top: 1px solid var(--rule);
-  animation: arrive 0.35s ease-out;
+  animation: arrive var(--settle) var(--ease);
+  transition:
+    grid-template-rows 0.4s var(--ease),
+    padding 0.4s var(--ease),
+    opacity 0.3s ease,
+    border-color 0.4s ease;
+}
+
+.name-row-inner {
+  min-height: 0;
+  /* Room for focus rings, which overflow: hidden would otherwise clip. */
+  margin: -6px;
+  padding: 6px;
+  overflow: hidden;
+}
+
+.name-row[data-collapsed="true"] {
+  grid-template-rows: 0fr;
+  padding-block: 0;
+  border-top-color: transparent;
+  opacity: 0;
 }
 
 .name-line {
@@ -462,12 +546,16 @@ p {
   line-height: 1.05;
   letter-spacing: -0.015em;
   overflow-wrap: anywhere;
+  transition:
+    color var(--settle) ease,
+    opacity var(--settle) ease;
 }
 
 .why {
   max-width: 38rem;
   margin-top: 6px;
   color: var(--ink-soft);
+  transition: color var(--settle) ease;
 }
 
 .save {
@@ -481,6 +569,9 @@ p {
   background: none;
   color: var(--ink-soft);
   cursor: pointer;
+  transition:
+    border-color var(--quick) ease,
+    color var(--quick) ease;
 }
 
 .save:hover {
@@ -490,6 +581,10 @@ p {
 
 .save[aria-pressed="true"] {
   color: var(--ink);
+}
+
+.save[aria-pressed="true"] svg {
+  animation: pop 0.4s var(--ease);
 }
 
 .domains {
@@ -505,7 +600,9 @@ p {
 .domain {
   text-decoration-thickness: 1px;
   text-underline-offset: 3px;
-  transition: color 0.2s;
+  transition:
+    color var(--quick) ease,
+    text-decoration-thickness var(--quick) ease;
 }
 
 .domain.is-free {
@@ -533,8 +630,20 @@ a.domain.is-free:hover {
   color: var(--ink-soft);
 }
 
+/* A highlight sweeps across a domain while its registry is asked; no spinner here, because
+   one appearing and disappearing per domain would shove its neighbours around. */
 .domain.is-checking {
-  animation: pending 1.2s ease-in-out infinite alternate;
+  background: linear-gradient(100deg, var(--ink-soft) 40%, var(--ink) 50%, var(--ink-soft) 60%) 0 0 / 250% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: sweep 1.6s linear infinite;
+}
+
+/* Once the answer is in, the domain eases from grey into blue or purple. */
+.names .domain.is-free,
+.names .domain.is-taken {
+  animation: settle var(--settle) ease-out;
 }
 
 .domain.is-unknown {
@@ -551,10 +660,116 @@ a.domain.is-free:hover {
   opacity: 0.6;
 }
 
+/* Placeholder rows */
+
+.name-row.is-placeholder {
+  animation: fade-in 0.3s ease;
+}
+
+.shimmer {
+  border-radius: 8px;
+  background: linear-gradient(100deg, var(--field) 40%, var(--field-strong) 50%, var(--field) 60%) 0 0 / 250% 100%;
+  animation: sweep 1.6s linear infinite;
+}
+
+.shimmer-name {
+  width: 38%;
+  height: clamp(2rem, 1.3rem + 3vw, 3rem);
+}
+
+.is-placeholder:nth-child(3n + 2) .shimmer-name {
+  width: 30%;
+}
+
+.is-placeholder:nth-child(3n) .shimmer-name {
+  width: 44%;
+}
+
+.shimmer-why {
+  width: min(28rem, 75%);
+  height: 1rem;
+  margin-top: 14px;
+}
+
+.shimmer-domains {
+  display: flex;
+  gap: 22px;
+  margin-top: 18px;
+}
+
+.shimmer-domain {
+  width: 6.5rem;
+  height: 1rem;
+}
+
+/* Spinner: the browser tab's loading ring */
+
+.spinner {
+  display: inline-block;
+  flex: none;
+  width: 1em;
+  height: 1em;
+}
+
+.spinner svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  animation: spin 1.4s linear infinite;
+}
+
+.spinner circle {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  stroke-dasharray: 5 100;
+  animation: arc 1.4s ease-in-out infinite;
+}
+
+/* Page-load bar along the top edge, tracking names and then domain checks. */
+
+.loadbar {
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 10;
+  height: 3px;
+  background: var(--link);
+  transform: scaleX(var(--progress));
+  transform-origin: 0 50%;
+  pointer-events: none;
+  transition:
+    transform 0.5s var(--ease),
+    opacity 0.3s ease;
+}
+
+@starting-style {
+  .loadbar {
+    transform: scaleX(0);
+  }
+}
+
+/* Until the first name arrives there's nothing to measure, so the bar creeps toward its
+   first stop the way a browser's does while waiting on a server. */
+.loadbar[data-phase="waiting"] {
+  transition-duration: 4s, 0.3s;
+  transition-timing-function: cubic-bezier(0.1, 0.6, 0.3, 1), ease;
+}
+
+.loadbar[data-state="done"] {
+  opacity: 0;
+  transition-delay: 0s, 0.5s;
+}
+
+.loadbar[data-state="failed"] {
+  opacity: 0;
+}
+
 .hidden-note {
   padding: 18px 0;
   border-top: 1px solid var(--rule);
   color: var(--ink-soft);
+  animation: fade-in 0.3s ease;
 }
 
 .more {
@@ -585,10 +800,44 @@ a.domain.is-free:hover {
   background: var(--paper);
   color: var(--ink);
   box-shadow: 0 8px 40px rgb(0 0 0 / 0.3);
+  opacity: 0;
+  transform: translateY(12px) scale(0.98);
+  /* allow-discrete lets the close animate too, where supported; elsewhere it just closes. */
+  transition:
+    opacity 0.22s ease,
+    transform 0.28s var(--ease),
+    overlay 0.28s allow-discrete,
+    display 0.28s allow-discrete;
+}
+
+.saved-dialog[open] {
+  opacity: 1;
+  transform: none;
+}
+
+@starting-style {
+  .saved-dialog[open] {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
 }
 
 .saved-dialog::backdrop {
+  background: rgb(0 0 0 / 0);
+  transition:
+    background-color 0.28s ease,
+    overlay 0.28s allow-discrete,
+    display 0.28s allow-discrete;
+}
+
+.saved-dialog[open]::backdrop {
   background: var(--backdrop);
+}
+
+@starting-style {
+  .saved-dialog[open]::backdrop {
+    background: rgb(0 0 0 / 0);
+  }
 }
 
 .saved-inner {
@@ -652,27 +901,105 @@ a.domain.is-free:hover {
 @keyframes arrive {
   from {
     opacity: 0;
-    transform: translateY(6px);
+    transform: translateY(10px);
   }
 }
 
-@keyframes pending {
+@keyframes fade-in {
   from {
-    opacity: 1;
+    opacity: 0;
+  }
+}
+
+@keyframes settle {
+  from {
+    color: var(--ink-soft);
+    text-decoration-color: transparent;
+  }
+}
+
+@keyframes sweep {
+  from {
+    background-position: 100% 0;
   }
   to {
-    opacity: 0.35;
+    background-position: 0% 0;
   }
 }
 
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* r=9 gives a 56.5 circumference: the arc grows to 38, then its tail chases its head round
+   to a 5-long stub, the same length it started at, so the loop has no visible seam. */
+@keyframes arc {
+  0% {
+    stroke-dasharray: 5 100;
+    stroke-dashoffset: 0;
+  }
+  50% {
+    stroke-dasharray: 38 100;
+    stroke-dashoffset: -12;
+  }
+  100% {
+    stroke-dasharray: 38 100;
+    stroke-dashoffset: -51;
+  }
+}
+
+@keyframes pop {
+  40% {
+    transform: scale(1.3);
+  }
+}
+
+@keyframes bump {
+  40% {
+    transform: scale(1.2);
+  }
+}
+
+/* Reduced motion: nothing slides, pops or sweeps. Spinners keep turning, slower, because
+   they're the only sign that something is still happening. */
 @media (prefers-reduced-motion: reduce) {
-  .name-row,
-  .domain.is-checking {
-    animation: none;
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01s !important;
   }
 
-  .domain {
-    transition: none;
+  .name-row,
+  .results,
+  .form-message,
+  .hidden-note,
+  .count,
+  .save svg,
+  .names .domain {
+    animation: none !important;
+  }
+
+  .domain.is-checking {
+    animation: none;
+    background: none;
+    color: var(--ink-soft);
+  }
+
+  .shimmer {
+    animation: none;
+    background: var(--field);
+  }
+
+  .spinner svg,
+  .spinner circle {
+    animation-duration: 2.8s;
+  }
+
+  .saved-dialog,
+  .saved-dialog[open] {
+    transform: none;
   }
 }
 

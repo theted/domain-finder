@@ -103,13 +103,16 @@ export const createApp = (deps: AppDeps) => {
         { description, feels, exclude: [...seen], count: NAMES_PER_BATCH },
         signal,
       );
+      let count = 0;
       for await (const idea of ideas) {
         const name = toLabel(idea.name);
         if (!name || seen.has(name)) continue;
         seen.add(name);
+        count++;
         await send({ type: "name", name, why: idea.why.trim() });
         for (const tld of tlds) checks.push(deps.checkDomain(name, tld).then((r) => send({ type: "domain", ...r })));
       }
+      await send({ type: "generated", count });
       await Promise.all(checks);
     });
   });

@@ -4,7 +4,8 @@ import { getHealth } from "./api.ts";
 import { Results, StarIcon } from "./components/Results.tsx";
 import { SavedDialog } from "./components/SavedDialog.tsx";
 import { SearchForm } from "./components/SearchForm.tsx";
-import { useNameSearch, type Query } from "./useNameSearch.ts";
+import { LoadBar } from "./components/Spinner.tsx";
+import { progressValue, useNameSearch, type Query } from "./useNameSearch.ts";
 import { useSaved } from "./useSaved.ts";
 
 export const App = () => {
@@ -24,6 +25,14 @@ export const App = () => {
 
   return (
     <div className="page">
+      {names.progress && (
+        <LoadBar
+          key={names.run}
+          value={names.status === "searching" ? progressValue(names.progress) : 1}
+          state={names.status === "searching" ? "loading" : names.error ? "failed" : "done"}
+          waiting={names.progress.names === 0}
+        />
+      )}
       <header className="masthead">
         <a className="wordmark" href="/">
           Domain finder
@@ -31,7 +40,9 @@ export const App = () => {
         <button type="button" className="saved-toggle" onClick={() => setSavedOpen(true)} aria-haspopup="dialog">
           <StarIcon filled={saved.items.length > 0} />
           Saved
-          <span className="count">{saved.items.length}</span>
+          <span className="count" key={saved.items.length}>
+            {saved.items.length}
+          </span>
         </button>
       </header>
 
@@ -52,6 +63,7 @@ export const App = () => {
 
         <SearchForm
           busy={names.status === "searching"}
+          checkingOwn={names.checkingOwn}
           error={names.error}
           onSearch={search}
           onStop={names.stop}
@@ -61,6 +73,9 @@ export const App = () => {
         <Results
           entries={names.entries}
           status={names.status}
+          mode={names.mode}
+          run={names.run}
+          generating={names.generating}
           canSearchMore={names.query !== null && names.entries.length > 0}
           onMore={names.more}
           isSaved={saved.isSaved}

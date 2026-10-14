@@ -13,9 +13,11 @@ import {
 } from "../../shared/domain.ts";
 import { EXAMPLES } from "../examples.ts";
 import type { Query } from "../useNameSearch.ts";
+import { Spinner } from "./Spinner.tsx";
 
 type Props = {
   busy: boolean;
+  checkingOwn: boolean;
   error: string | null;
   onSearch: (query: Query) => void;
   onStop: () => void;
@@ -24,7 +26,7 @@ type Props = {
 
 const toggle = <T,>(list: T[], value: T) => (list.includes(value) ? list.filter((v) => v !== value) : [...list, value]);
 
-export const SearchForm = ({ busy, error, onSearch, onStop, onCheckOwn }: Props) => {
+export const SearchForm = ({ busy, checkingOwn, error, onSearch, onStop, onCheckOwn }: Props) => {
   const id = useId();
   const [description, setDescription] = useState("");
   const [feels, setFeels] = useState<Feel[]>([]);
@@ -137,7 +139,14 @@ export const SearchForm = ({ busy, error, onSearch, onStop, onCheckOwn }: Props)
 
         <div className="actions">
           <button type="submit" className="primary" disabled={busy}>
-            {busy ? "Finding names…" : "Find names"}
+            {busy ? (
+              <>
+                <Spinner />
+                Finding names…
+              </>
+            ) : (
+              "Find names"
+            )}
           </button>
           {busy && (
             <button type="button" className="secondary" onClick={onStop}>
@@ -164,8 +173,15 @@ export const SearchForm = ({ busy, error, onSearch, onStop, onCheckOwn }: Props)
             value={ownNames}
             onChange={(e) => setOwnNames(e.target.value)}
           />
-          <button type="submit" className="secondary" disabled={!ownNames.trim()}>
-            Check it
+          <button type="submit" className="secondary" disabled={checkingOwn || !ownNames.trim()}>
+            {checkingOwn ? (
+              <>
+                <Spinner />
+                Checking…
+              </>
+            ) : (
+              "Check it"
+            )}
           </button>
         </div>
       </form>

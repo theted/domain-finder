@@ -1,10 +1,14 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { freeDomains, isSettled, type NameEntry } from "../useNameSearch.ts";
 import { DomainLink } from "./DomainLink.tsx";
+import { Spinner } from "./Spinner.tsx";
 
 type Props = {
   entries: NameEntry[];
   status: "idle" | "searching" | "done";
+  mode: "new" | "more" | null;
+  run: number;
+  generating: boolean;
   canSearchMore: boolean;
   onMore: () => void;
   isSaved: (name: string) => boolean;
@@ -12,6 +16,8 @@ type Props = {
 };
 
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
+
+const prefersReducedMotion = () => window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
 
 export const StarIcon = ({ filled }: { filled: boolean }) => (
   <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
@@ -25,23 +31,55 @@ export const StarIcon = ({ filled }: { filled: boolean }) => (
   </svg>
 );
 
-export const Results = ({ entries, status, canSearchMore, onMore, isSaved, onToggleSaved }: Props) => {
+// Stand-in rows where names are about to land, while the model is still writing.
+const Placeholder = () => (
+  <li className="name-row is-placeholder" aria-hidden="true">
+    <div className="name-row-inner">
+      <div className="shimmer shimmer-name" />
+      <div className="shimmer shimmer-why" />
+      <div className="shimmer-domains">
+        <div className="shimmer shimmer-domain" />
+        <div className="shimmer shimmer-domain" />
+        <div className="shimmer shimmer-domain" />
+      </div>
+    </div>
+  </li>
+);
+
+export const Results = (props: Props) => {
+  const { entries, status, mode, run, generating, canSearchMore, onMore, isSaved, onToggleSaved } = props;
   const [onlyFree, setOnlyFree] = useState(false);
+  const section = useRef<HTMLElement>(null);
+
+  // A new search scrolls the results into view if they start below the fold.
+  useEffect(() => {
+    const el = section.current;
+    if (!el || mode !== "new" || el.getBoundingClientRect().top < window.innerHeight * 0.6) return;
+    el.scrollIntoView?.({ behavior: prefersReducedMotion() ? "auto" : "smooth", block: "start" });
+  }, [run, mode]);
 
   if (status === "idle" && !entries.length) return null;
 
+  const searching = status === "searching";
   const withFree = entries.filter((entry) => freeDomains(entry).length > 0).length;
   const anyUncertain = entries.some((entry) => freeDomains(entry).some((result) => !result.certain));
-  const visible = onlyFree ? entries.filter((entry) => !isSettled(entry) || freeDomains(entry).length) : entries;
-  const summary =
-    !entries.length && status === "searching"
-      ? "Thinking up names…"
-      : `${plural(entries.length, "name")}, ${withFree} with a free domain`;
+  const hidden = onlyFree ? entries.filter((entry) => isSettled(entry) && !freeDomains(entry).length).length : 0;
+  const placeholders = searching && generating ? (entries.length ? 1 : 3) : 0;
+  const summary = `${plural(entries.length, "name")}, ${withFree} with a free domain`;
 
   return (
-    <section className="results" aria-labelledby="results-heading">
+    <section ref={section} className="results" aria-labelledby="results-heading" aria-busy={searching}>
       <div className="results-head">
-        <h2 id="results-heading">{summary}</h2>
+        <h2 id="results-heading">
+          {!entries.length && searching ? (
+            <>
+              <Spinner />
+              Thinking up names…
+            </>
+          ) : (
+            summary
+          )}
+        </h2>
         <label className="toggle">
           <input type="checkbox" checked={onlyFree} onChange={(e) => setOnlyFree(e.target.checked)} />
           Hide names with no free domain
@@ -59,48 +97,65 @@ export const Results = ({ entries, status, canSearchMore, onMore, isSaved, onTog
       </p>
 
       <ul className="names">
-        {visible.map((entry) => {
+        {entries.map((entry) => {
           const settled = isSettled(entry);
           const allTaken = settled && freeDomains(entry).length === 0;
+          const collapsed = onlyFree && allTaken;
           const saved = isSaved(entry.name);
           return (
-            <li key={entry.name} className={allTaken ? "name-row is-all-taken" : "name-row"}>
-              <div className="name-line">
-                <h3 className="name">{entry.name}</h3>
-                <button
-                  type="button"
-                  className="save"
-                  aria-pressed={saved}
-                  aria-label={`${saved ? "Saved" : "Save"} ${entry.name}`}
-                  onClick={() => onToggleSaved(entry)}
-                >
-                  <StarIcon filled={saved} />
-                  <span aria-hidden="true">{saved ? "Saved" : "Save"}</span>
-                </button>
+            <li
+              key={entry.name}
+              className={allTaken ? "name-row is-all-taken" : "name-row"}
+              data-collapsed={collapsed}
+              aria-hidden={collapsed || undefined}
+              inert={collapsed}
+            >
+              <div className="name-row-inner">
+                <div className="name-line">
+                  <h3 className="name">{entry.name}</h3>
+                  <button
+                    type="button"
+                    className="save"
+                    aria-pressed={saved}
+                    aria-label={`${saved ? "Saved" : "Save"} ${entry.name}`}
+                    onClick={() => onToggleSaved(entry)}
+                  >
+                    <StarIcon filled={saved} />
+                    <span aria-hidden="true">{saved ? "Saved" : "Save"}</span>
+                  </button>
+                </div>
+                <p className="why">{entry.own ? "Your idea." : entry.why}</p>
+                <ul className="domains">
+                  {entry.tlds.map((tld) => (
+                    <li key={tld}>
+                      <DomainLink domain={`${entry.name}.${tld}`} result={entry.domains[tld]} />
+                    </li>
+                  ))}
+                </ul>
               </div>
-              <p className="why">{entry.own ? "Your idea." : entry.why}</p>
-              <ul className="domains">
-                {entry.tlds.map((tld) => (
-                  <li key={tld}>
-                    <DomainLink domain={`${entry.name}.${tld}`} result={entry.domains[tld]} />
-                  </li>
-                ))}
-              </ul>
             </li>
           );
         })}
+        {Array.from({ length: placeholders }, (_, i) => (
+          <Placeholder key={`placeholder-${i}`} />
+        ))}
       </ul>
 
-      {onlyFree && visible.length < entries.length && (
-        <p className="hidden-note">
-          {plural(entries.length - visible.length, "name")} hidden because every domain is taken.
-        </p>
+      {hidden > 0 && (
+        <p className="hidden-note">{plural(hidden, "name")} hidden because every domain is taken.</p>
       )}
 
-      {canSearchMore && (
+      {canSearchMore && !(searching && mode === "new") && (
         <div className="more">
-          <button type="button" className="secondary" onClick={onMore} disabled={status === "searching"}>
-            Suggest more names
+          <button type="button" className="secondary" onClick={onMore} disabled={searching}>
+            {searching ? (
+              <>
+                <Spinner />
+                Finding more names…
+              </>
+            ) : (
+              "Suggest more names"
+            )}
           </button>
         </div>
       )}
