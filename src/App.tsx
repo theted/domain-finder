@@ -35,7 +35,8 @@ export const App = () => {
       )}
       <header className="masthead">
         <a className="wordmark" href="/">
-          Domain finder
+          <span className="brand-mark" aria-hidden="true">↗</span>
+          <span>Domain finder</span>
         </a>
         <button type="button" className="saved-toggle" onClick={() => setSavedOpen(true)} aria-haspopup="dialog">
           <StarIcon filled={saved.items.length > 0} />
@@ -54,11 +55,17 @@ export const App = () => {
 
       <main>
         <section className="intro">
+          <p className="eyebrow">A clearer way to name your next thing</p>
           <h1>Find a name with the domain still free.</h1>
           <p className="lede">
             Describe what you're naming. Every idea is checked against the domain registries for the endings you pick,
             while you watch.
           </p>
+          <div className="intro-proof" aria-label="What Domain finder does">
+            <span>Ideas, not guesswork</span>
+            <span>Live domain checks</span>
+            <span>Save your shortlist</span>
+          </div>
         </section>
 
         <SearchForm

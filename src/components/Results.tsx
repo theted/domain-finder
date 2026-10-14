@@ -70,16 +70,19 @@ export const Results = (props: Props) => {
   return (
     <section ref={section} className="results" aria-labelledby="results-heading" aria-busy={searching}>
       <div className="results-head">
-        <h2 id="results-heading">
-          {!entries.length && searching ? (
-            <>
-              <Spinner />
-              Thinking up names…
-            </>
-          ) : (
-            summary
-          )}
-        </h2>
+        <div>
+          <p className="results-kicker">{searching ? "Building your shortlist" : "Your shortlist"}</p>
+          <h2 id="results-heading">
+            {!entries.length && searching ? (
+              <>
+                <Spinner />
+                Thinking up names…
+              </>
+            ) : (
+              summary
+            )}
+          </h2>
+        </div>
         <label className="toggle">
           <input type="checkbox" checked={onlyFree} onChange={(e) => setOnlyFree(e.target.checked)} />
           Hide names with no free domain
